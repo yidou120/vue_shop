@@ -25,8 +25,8 @@ export default {
   data () {
     return {
       loginForm: {
-        username: '',
-        password: ''
+        username: 'admin',
+        password: '123456'
       },
       loginFormRules: {
         username: [
@@ -45,8 +45,14 @@ export default {
       this.$refs[formRef].resetFields()
     },
     login (formRef) {
-      this.$refs[formRef].validate((result) => {
-        console.log(result)
+      this.$refs[formRef].validate(async (result) => {
+        if (!result) return
+        const { data: res } = await this.$http.post('login', this.loginForm)
+        if (res.meta.status !== 200) return this.$message.warning('登录失败')
+        const token = res.data.token
+        window.sessionStorage.setItem('token', token)
+        this.$router.push('/home')
+        return this.$message.success('登录成功')
       })
     }
   }
