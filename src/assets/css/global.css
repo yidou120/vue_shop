@@ -6,3 +6,9 @@ body,
     margin: 0;
     padding: 0;
 }
+.el-card {
+
+}
+.el-breadcrumb {
+    margin-bottom: 15px;
+}

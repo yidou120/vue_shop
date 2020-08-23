@@ -4,6 +4,8 @@ import router from './router'
 import './plugins/element.js'
 import ElementUI from 'element-ui'
 import 'element-ui/lib/theme-chalk/index.css'
+// 导入iconfonts
+import './assets/fonts/iconfont.css'
 // 导入全局样式表
 import './assets/css/global.css'
 import axios from 'axios'
