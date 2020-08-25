@@ -9,8 +9,8 @@
     <el-card>
       <el-row :gutter="20">
         <el-col :span="7">
-          <el-input placeholder="请输入搜索内容">
-            <el-button slot="append" icon="el-icon-search"></el-button>
+          <el-input placeholder="请输入搜索内容" clearable v-model="paramObj.query" @clear="getUserList">
+            <el-button slot="append" icon="el-icon-search" @click="queryUsers"></el-button>
           </el-input>
         </el-col>
         <el-col :span="4">
@@ -19,7 +19,15 @@
       </el-row>
       <el-table
         :data="userList"
-        style="width: 100%">
+        style="width: 100%"
+        stripe
+        border
+      >
+        <el-table-column
+          type="index"
+          label="#"
+          width="50">
+        </el-table-column>
         <el-table-column
           prop="username"
           label="姓名"
@@ -43,7 +51,7 @@
           label="状态">
           <template slot-scope="scope">
             <el-switch
-              v-model="scope.row.mg_state">
+              v-model="scope.row.mg_state" @change="userStateChange(scope.row)">
             </el-switch>
           </template>
         </el-table-column>
@@ -57,11 +65,11 @@
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage4"
-        :page-sizes="[100, 200, 300, 400]"
-        :page-size="100"
+        :current-page="paramObj.pagenum"
+        :page-sizes="[2, 4, 8, 10]"
+        :page-size="paramObj.pagesize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="400">
+        :total="total">
       </el-pagination>
     </el-card>
   </div>
@@ -93,6 +101,25 @@ export default {
       this.userList = res.data.users
       this.total = res.data.total
       console.log(res)
+    },
+    handleSizeChange (size) {
+      this.paramObj.pagesize = size
+      this.getUserList()
+    },
+    handleCurrentChange (currentPage) {
+      this.paramObj.pagenum = currentPage
+      this.getUserList()
+    },
+    queryUsers () {
+      this.getUserList()
+    },
+    async userStateChange (userinfo) {
+      const { data: res } = await this.$http.put(`users/${userinfo.id}/state/${userinfo.mg_state}`)
+      if (res.meta.status !== 200) {
+        this.paramObj.mg_state = !this.paramObj.mg_state
+        return this.$message.error('更新用户状态失败')
+      }
+      return this.$message.success('更新用户状态成功')
     }
   }
 }

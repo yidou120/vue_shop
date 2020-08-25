@@ -12,3 +12,10 @@ body,
 .el-breadcrumb {
     margin-bottom: 15px;
 }
+.el-table {
+    font-size: 12px;
+    margin-top: 12px;
+}
+.el-pagination {
+    margin-top: 12px;
+}
