@@ -103,22 +103,23 @@
     <el-dialog
       title="修改用户"
       :visible.sync="editDialogVisible"
-      width="30%"
+      width="50%"
+      @close="closeEditDialog"
       >
-      <el-form :model="eidtUser" :rules="editUserFormRules" ref="editUserFormRef" label-width="100px">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="eidtUser.username" disabled></el-input>
+      <el-form :model="editUser" :rules="editUserFormRules" ref="editUserFormRef" label-width="100px">
+        <el-form-item label="用户名">
+          <el-input v-model="editUser.username" disabled></el-input>
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="eidtUser.email"></el-input>
+          <el-input v-model="editUser.email"></el-input>
         </el-form-item>
         <el-form-item label="手机" prop="mobile">
-          <el-input v-model="eidtUser.mobile"></el-input>
+          <el-input v-model="editUser.mobile"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer">
         <el-button @click="editDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="submitEditUser">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -158,7 +159,7 @@ export default {
         email: '',
         mobile: ''
       },
-      eidtUser: {},
+      editUser: {},
       userFormRules: {
         username: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -168,6 +169,16 @@ export default {
           { required: true, message: '请输入密码', trigger: 'blur' },
           { min: 3, max: 10, message: '长度在 3 到 10个字符', trigger: 'blur' }
         ],
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' }
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { validator: checkMobile, trigger: 'blur' }
+        ]
+      },
+      editUserFormRules: {
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
           { validator: checkEmail, trigger: 'blur' }
@@ -228,8 +239,23 @@ export default {
       this.editDialogVisible = true
       const { data: res } = await this.$http.get('users/' + id)
       if (res.meta.status !== 200) return this.$message.error('获取用户信息失败')
-      this.eidtUser = res.data
-      console.log(this.editUser)
+      this.editUser = res.data
+    },
+    submitEditUser () {
+      this.$refs.editUserFormRef.validate(async valid => {
+        if(!valid) return this.$message.error('信息输入不通过')
+        const { data: res } = await this.$http.put('users/' + this.editUser.id, {
+          email: this.editUser.email,
+          mobile: this.editUser.mobile
+        })
+        if(res.meta.status !== 200) return this.$message.error('修改用户信息失败')
+        this.editDialogVisible = false
+        this.getUserList()
+        this.$message.success('更新成功')
+      })
+    },
+    closeEditDialog () {
+      this.$refs.editUserFormRef.resetFields()
     }
   }
 }
