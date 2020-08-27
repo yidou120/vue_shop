@@ -104,6 +104,20 @@
 export default {
   name: '',
   data () {
+    var checkEmail = (rule, value, callback) => {
+      const regEmail = /^\w+@\w+(\.\w+)+$/
+      if (regEmail.test(value)) {
+        return callback()
+      }
+      callback(new Error('请输入合法邮箱'))
+    }
+    var checkMobile = (rule, value, callback) => {
+      const regMobile = /^1[345678]\d{9}$/
+      if (regMobile.test(value)) {
+        return callback()
+      }
+      callback(new Error('请输入合法手机号'))
+    }
     return {
       paramObj: {
         query: '',
@@ -130,11 +144,11 @@ export default {
         ],
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          { validator: checkEmail, trigger: 'blur' }
         ],
         mobile: [
           { required: true, message: '请输入手机号', trigger: 'blur' },
-          { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+          { validator: checkMobile, trigger: 'blur' }
         ]
       }
     }
