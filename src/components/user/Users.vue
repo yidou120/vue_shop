@@ -57,9 +57,11 @@
         </el-table-column>
         <el-table-column
           label="操作">
-          <el-button type="primary" class="el-icon-edit" size="mini"></el-button>
-          <el-button type="danger" class="el-icon-delete" size="mini"></el-button>
-          <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
+          <template slot-scope="scope">
+            <el-button type="primary" class="el-icon-edit" size="mini" @click="editUserForm(scope.row.id)"></el-button>
+            <el-button type="danger" class="el-icon-delete" size="mini"></el-button>
+            <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
+          </template>
         </el-table-column>
       </el-table>
       <el-pagination
@@ -98,6 +100,27 @@
         <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog
+      title="修改用户"
+      :visible.sync="editDialogVisible"
+      width="30%"
+      >
+      <el-form :model="eidtUser" :rules="editUserFormRules" ref="editUserFormRef" label-width="100px">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="eidtUser.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="eidtUser.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="eidtUser.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editDialogVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -128,12 +151,14 @@ export default {
       userList: [],
       total: 0,
       dialogVisible: false,
+      editDialogVisible: false,
       userForm: {
         username: '',
         password: '',
         email: '',
         mobile: ''
       },
+      eidtUser: {},
       userFormRules: {
         username: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -198,6 +223,13 @@ export default {
         this.dialogVisible = false
         this.getUserList()
       })
+    },
+    async editUserForm (id) {
+      this.editDialogVisible = true
+      const { data: res } = await this.$http.get('users/' + id)
+      if (res.meta.status !== 200) return this.$message.error('获取用户信息失败')
+      this.eidtUser = res.data
+      console.log(this.editUser)
     }
   }
 }
