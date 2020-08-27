@@ -77,8 +77,9 @@
       title="添加用户"
       :visible.sync="dialogVisible"
       width="50%"
+      @close="closeDialogEvent"
       >
-      <el-form :model="userForm" :rules="userFormRules" ref="userForm" label-width="100px">
+      <el-form :model="userForm" :rules="userFormRules" ref="userFormRef" label-width="100px">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username"></el-input>
         </el-form-item>
@@ -94,7 +95,7 @@
       </el-form>
       <span slot="footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="addUser">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -184,6 +185,19 @@ export default {
         return this.$message.error('更新用户状态失败')
       }
       return this.$message.success('更新用户状态成功')
+    },
+    closeDialogEvent () {
+      this.$refs.userFormRef.resetFields()
+    },
+    addUser () {
+      this.$refs.userFormRef.validate(async valid => {
+        if (!valid) return this.$message.error('表单校验不通过')
+        const { data: res } = await this.$http.post('users', this.userForm)
+        if (res.meta.status !== 201) return this.$message.error('添加用户失败')
+        this.$message.success('添加用户成功')
+        this.dialogVisible = false
+        this.getUserList()
+      })
     }
   }
 }
