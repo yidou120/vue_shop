@@ -59,7 +59,7 @@
           label="操作">
           <template slot-scope="scope">
             <el-button type="primary" class="el-icon-edit" size="mini" @click="editUserForm(scope.row.id)"></el-button>
-            <el-button type="danger" class="el-icon-delete" size="mini"></el-button>
+            <el-button type="danger" class="el-icon-delete" size="mini" @click="removeUserById(scope.row.id)"></el-button>
             <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
           </template>
         </el-table-column>
@@ -243,12 +243,12 @@ export default {
     },
     submitEditUser () {
       this.$refs.editUserFormRef.validate(async valid => {
-        if(!valid) return this.$message.error('信息输入不通过')
+        if (!valid) return this.$message.error('信息输入不通过')
         const { data: res } = await this.$http.put('users/' + this.editUser.id, {
           email: this.editUser.email,
           mobile: this.editUser.mobile
         })
-        if(res.meta.status !== 200) return this.$message.error('修改用户信息失败')
+        if (res.meta.status !== 200) return this.$message.error('修改用户信息失败')
         this.editDialogVisible = false
         this.getUserList()
         this.$message.success('更新成功')
@@ -256,6 +256,22 @@ export default {
     },
     closeEditDialog () {
       this.$refs.editUserFormRef.resetFields()
+    },
+    async removeUserById (id) {
+      const result = await this.$confirm('是否永久删除该用户?', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消'
+      }).catch(err => err)
+      // 点击确定 返回confirm
+      // 点击取消 会报错 所以需要用catch捕获 返回的信息是cancel
+      // console.log(result)
+      if (result !== 'confirm') return this.$message.info('已取消删除操作')
+      const { data: res } = await this.$http.delete('users/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除用户失败')
+      }
+      this.getUserList()
+      this.$message.success('用户已删除')
     }
   }
 }
