@@ -52,8 +52,8 @@
         <el-table-column label="操作" width="300px">
           <template slot-scope="scope">
             <el-button size="mini" type="primary" icon="el-icon-edit" @click="editRole(scope.row.id)">编辑</el-button>
-            <el-button size="mini" type="danger" icon="el-icon-edit" @click="deleteRole(scope.row.id)">删除</el-button>
-            <el-button size="mini" type="warning" icon="el-icon-edit">分配权限</el-button>
+            <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteRole(scope.row.id)">删除</el-button>
+            <el-button size="mini" type="warning" icon="el-icon-setting" @click="editRight(scope.row)">分配权限</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,6 +95,26 @@
         <el-button type="primary" @click="submitEditRole">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog
+      title="分配权限"
+      :visible.sync="rightDialogVisible"
+      width="50%"
+      @close="resetDialogTree"
+      >
+      <el-tree
+        :data="rightsList"
+        show-checkbox
+        node-key="id"
+        default-expand-all
+        :default-checked-keys="checkRights"
+        :props="rightsProps"
+        ref="treeRef">
+      </el-tree>
+      <span slot="footer" class="dialog-footer">
+    <el-button @click="rightDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="submitEditRights">确 定</el-button>
+  </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -104,8 +124,16 @@ export default {
   data () {
     return {
       rolesList: [],
+      roleId: '',
+      rightsList: [],
+      checkRights: [],
+      rightsProps: {
+        children: 'children',
+        label: 'authName'
+      },
       addDialogVisible: false,
       editDialogVisible: false,
+      rightDialogVisible: false,
       addRoleInfo: {
         roleName: '',
         roleDesc: ''
@@ -204,6 +232,38 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+    async editRight (row) {
+      this.roleId = row.id
+      const { data: res } = await this.$http.get('rights/tree')
+      if (res.meta.status !== 200) return this.$message.error('获取权限列表失败')
+      this.rightsList = res.data
+      // 获取该用户所拥有的权限列表
+      this.recurGetRoleRights(row, this.checkRights)
+      this.rightDialogVisible = true
+    },
+    // 递归获取该用户下所有的三级权限id
+    recurGetRoleRights (row, arr) {
+      if (!row.children) return arr.push(row.id)
+      row.children.forEach(item => this.recurGetRoleRights(item, arr))
+    },
+    resetDialogTree () {
+      this.checkRights = []
+    },
+    // 点击确定 重新分配角色拥有的权限
+    async submitEditRights () {
+      const keys = [
+        ...this.$refs.treeRef.getCheckedKeys(),
+        ...this.$refs.treeRef.getHalfCheckedKeys()
+      ]
+      const idStr = keys.join(',')
+      const { data: res } = await this.$http.post(`roles/${this.roleId}/rights`, {
+        rids: idStr
+      })
+      if (res.meta.status !== 200) return this.$message.error('分配权限失败')
+      this.$message.success('更新角色信息成功')
+      this.rightDialogVisible = false
+      this.getRolesList()
     }
   }
 }

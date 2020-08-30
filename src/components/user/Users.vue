@@ -61,7 +61,7 @@
             <el-button type="primary" class="el-icon-edit" size="mini" @click="editUserForm(scope.row.id)"></el-button>
             <el-button type="danger" class="el-icon-delete" size="mini" @click="removeUserById(scope.row.id)"></el-button>
             <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
-              <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
+              <el-button type="warning" class="el-icon-setting" size="mini" @click="editUserRole(scope.row)"></el-button>
             </el-tooltip>
           </template>
         </el-table-column>
@@ -124,6 +124,30 @@
         <el-button type="primary" @click="submitEditUser">确 定</el-button>
       </span>
     </el-dialog>
+    <el-dialog
+      title="分配角色"
+      :visible.sync="rolesDialogVisible"
+      width="50%"
+      @close="closeEditRolesDialog"
+      >
+      <div>
+        <p>当前的用户：{{currentRoleInfo.username}}</p>
+        <p>当前的角色：{{currentRoleInfo.role_name}}</p>
+        分配新角色：
+        <el-select v-model="selectRoleId" placeholder="请选择">
+          <el-option
+            v-for="item in allRoles"
+            :key="item.id"
+            :label="item.roleName"
+            :value="item.id">
+          </el-option>
+        </el-select>
+      </div>
+      <span slot="footer">
+        <el-button @click="rolesDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="updateUserRole">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -151,10 +175,14 @@ export default {
         pagenum: 1,
         pagesize: 2
       },
+      allRoles: [],
+      selectRoleId: '',
       userList: [],
       total: 0,
       dialogVisible: false,
       editDialogVisible: false,
+      rolesDialogVisible: false,
+      currentRoleInfo: {},
       userForm: {
         username: '',
         password: '',
@@ -274,6 +302,25 @@ export default {
       }
       this.getUserList()
       this.$message.success('用户已删除')
+    },
+    async editUserRole (row) {
+      this.currentRoleInfo = row
+      const { data: res } = await this.$http.get('roles')
+      this.allRoles = res.data
+      this.rolesDialogVisible = true
+    },
+    async updateUserRole () {
+      if (!this.selectRoleId) return this.$message.info('请选择分配的新角色')
+      const { data: res } = await this.$http.put(`users/${this.currentRoleInfo.id}/role`, {
+        rid: this.selectRoleId
+      })
+      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
+      this.$message.success(res.meta.msg)
+      this.getUserList()
+      this.rolesDialogVisible = false
+    },
+    closeEditRolesDialog () {
+      this.selectRoleId = ''
     }
   }
 }
