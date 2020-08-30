@@ -60,7 +60,9 @@
           <template slot-scope="scope">
             <el-button type="primary" class="el-icon-edit" size="mini" @click="editUserForm(scope.row.id)"></el-button>
             <el-button type="danger" class="el-icon-delete" size="mini" @click="removeUserById(scope.row.id)"></el-button>
-            <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
+            <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
+              <el-button type="warning" class="el-icon-setting" size="mini"></el-button>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>

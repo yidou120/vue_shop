@@ -14,30 +14,32 @@
       <el-table :data="rolesList" stripe border>
         <el-table-column type="expand">
           <template slot-scope="scope">
-            <el-row v-for="(item1) in scope.row.children"
-                     :key="item1.id">
+            <el-row v-for="(item1, i1) in scope.row.children"
+                     :key="item1.id"
+                    :class="['bdBottom', i1 === 0 ? 'bdTop' : '', 'verTag']">
               <el-col :span="5">
-                <el-tag closable>
+                <el-tag closable @close="removeRule(scope.row, item1.id)">
                   {{item1.authName}}
                 </el-tag>
                 <i class="el-icon-caret-right"></i>
               </el-col>
               <el-col :span="19">
-                <el-row v-for="(item2) in item1.children"
-                          :key="item2.id">
+                <el-row v-for="(item2, i2) in item1.children"
+                          :key="item2.id"
+                          :class="['verTag', i2 === 0 ? '':'bdTop']">
                   <el-col :span="6">
-                    <el-tag type="success">
+                    <el-tag type="success" closable @close="removeRule(scope.row, item2.id)">
                       {{item2.authName}}
                     </el-tag>
                     <i class="el-icon-caret-right"></i>
                   </el-col>
                   <el-col :span="18">
                     <el-tag type="warning" v-for="(item3) in item2.children"
-                            :key="item3.id"
+                            :key="item3.id" closable
+                            @close="removeRule(scope.row, item3.id)"
                     >
                       {{item3.authName}}
                     </el-tag>
-                    <i class="el-icon-caret-right"></i>
                   </el-col>
                 </el-row>
               </el-col>
@@ -185,6 +187,23 @@ export default {
           message: '已取消删除'
         })
       })
+    },
+    removeRule (row, id) {
+      this.$confirm('此操作将永久删除该权限, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        const { data: res } = await this.$http.delete(`roles/${row.id}/rights/${id}`)
+        if (res.meta.status !== 200) return this.$message.error('删除该权限失败')
+        this.$message.success('删除该权限成功')
+        row.children = res.data
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     }
   }
 }
@@ -192,6 +211,16 @@ export default {
 
 <style scoped lang="less">
   .verTag {
-    margin-top: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .bdTop {
+    border-top: 1px solid #eee;
+  }
+  .bdBottom {
+    border-bottom: 1px solid #eee;
+  }
+  .el-tag {
+    margin: 7px;
   }
 </style>

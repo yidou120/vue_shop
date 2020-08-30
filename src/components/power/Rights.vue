@@ -27,7 +27,7 @@ export default {
   name: '',
   data () {
     return {
-      rightsList: {}
+      rightsList: []
     }
   },
   created () {
