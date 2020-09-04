@@ -48,6 +48,7 @@
       title="添加分类"
       :visible.sync="addCateDialogVisible"
       width="50%"
+      @close="closeAddCateDialog"
       >
       <el-form :model="cateInfo" ref="cateInfoRef" :rules="cateInfoRules" label-width="100px">
         <el-form-item label="分类名称：" prop="cat_name">
@@ -58,14 +59,14 @@
             v-model="selectKeys"
             :options="parentCateList"
             :props="cascaderProps"
-            @change="handleChange"
+            @change="parentCateChange"
             clearable
           ></el-cascader>
         </el-form-item>
       </el-form>
       <span slot="footer">
         <el-button @click="addCateDialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addCateDialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="submitAddCate">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -160,8 +161,33 @@ export default {
       if (res.meta.status !== 200) return this.$message.error('获取分类列表失败')
       this.parentCateList = res.data
     },
-    handleChange (selectKeys) {
-      console.log(selectKeys)
+    parentCateChange (selectKeys) {
+      // 大于0代表不是一级分类
+      if (selectKeys.length > 0) {
+        this.selectKeys = selectKeys
+        this.cateInfo.cat_level = selectKeys.length
+        this.cateInfo.cat_pid = selectKeys[selectKeys.length - 1]
+      } else {
+        this.selectKeys = []
+        this.cateInfo.cat_level = 0
+        this.cateInfo.cat_pid = 0
+      }
+    },
+    async submitAddCate () {
+      const { data: res } = await this.$http.post('categories', this.cateInfo)
+      if (res.meta.status !== 201) {
+        return this.$message.error(res.meta.msg)
+      }
+      this.$message.success('添加分类成功')
+      this.getCateList()
+      this.addCateDialogVisible = false
+    },
+    closeAddCateDialog () {
+      this.$refs.cateInfoRef.resetFields()
+      // 将级联选择框的数据清空
+      this.selectKeys = []
+      this.cateInfo.cat_pid = 0
+      this.cateInfo.cat_level = 0
     }
   }
 }
