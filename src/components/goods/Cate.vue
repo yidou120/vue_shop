@@ -161,14 +161,12 @@ export default {
       if (res.meta.status !== 200) return this.$message.error('获取分类列表失败')
       this.parentCateList = res.data
     },
-    parentCateChange (selectKeys) {
+    parentCateChange () {
       // 大于0代表不是一级分类
-      if (selectKeys.length > 0) {
-        this.selectKeys = selectKeys
-        this.cateInfo.cat_level = selectKeys.length
-        this.cateInfo.cat_pid = selectKeys[selectKeys.length - 1]
+      if (this.selectKeys.length > 0) {
+        this.cateInfo.cat_level = this.selectKeys.length
+        this.cateInfo.cat_pid = this.selectKeys[this.selectKeys.length - 1]
       } else {
-        this.selectKeys = []
         this.cateInfo.cat_level = 0
         this.cateInfo.cat_pid = 0
       }
