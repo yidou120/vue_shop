@@ -25,8 +25,33 @@
         </el-col>
       </el-row>
       <el-tabs v-model="activeName" @tab-click="tabClick">
-        <el-tab-pane label="动态参数" name="first">动态参数</el-tab-pane>
-        <el-tab-pane label="静态属性" name="second">静态属性</el-tab-pane>
+        <el-tab-pane label="动态参数" name="many">
+          <el-button type="primary" size="mini" :disabled="isButtonDisable">添加参数</el-button>
+          <el-table :data="manyTableList">
+            <el-table-column type="expand"></el-table-column>
+            <el-table-column type="index" label="#"></el-table-column>
+            <el-table-column label="参数名称" prop="attr_name"></el-table-column>
+            <el-table-column label="操作">
+              <template>
+                <el-button size="mini" type="primary" icon="el-icon-edit">修改</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete">修改</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="静态属性" name="only">
+          <el-button type="primary" size="mini" :disabled="isButtonDisable">添加属性</el-button>
+          <el-table :data="onlyTableList">
+            <el-table-column type="index" label="#"></el-table-column>
+            <el-table-column label="参数名称" prop="attr_name"></el-table-column>
+            <el-table-column label="操作">
+              <template>
+                <el-button size="mini" type="primary" icon="el-icon-edit">修改</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete">修改</el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-tab-pane>
       </el-tabs>
     </el-card>
   </div>
@@ -37,7 +62,9 @@ export default {
   name: '',
   data () {
     return {
-      activeName: 'first',
+      manyTableList: [],
+      onlyTableList: [],
+      activeName: 'many',
       paramsCateList: [],
       selectKeys: [],
       cascaderCateProps: {
@@ -51,11 +78,24 @@ export default {
   created () {
     this.getParamCateList()
   },
-  methods: {
-    paramsCateChange () {
-      if (this.selectKeys.length !== 3) {
-        this.selectKeys = []
+  computed: {
+    isButtonDisable () {
+      if (this.selectKeys.length === 3) {
+        return false
       }
+      return true
+    }
+  },
+  methods: {
+    getCateId () {
+      if (this.selectKeys.length === 3) {
+        const cateId = this.selectKeys[this.selectKeys.length - 1]
+        return parseInt(cateId)
+      }
+      return null
+    },
+    paramsCateChange () {
+      this.getPramsList()
     },
     async getParamCateList () {
       const { data: res } = await this.$http.get('categories')
@@ -64,7 +104,30 @@ export default {
       }
       this.paramsCateList = res.data
     },
-    tabClick () {}
+    tabClick () {
+      this.getPramsList()
+    },
+    async getPramsList () {
+      if (this.selectKeys.length !== 3) {
+        this.selectKeys = []
+        this.onlyTableList = []
+        this.manyTableList = []
+        return
+      }
+      const { data: res } = await this.$http.get(`categories/${this.getCateId()}/attributes`, {
+        params: {
+          sel: this.activeName
+        }
+      })
+      if (res.meta.status !== 200) {
+        return this.$message.error('获取参数列表失败')
+      }
+      if (this.activeName === 'only') {
+        this.onlyTableList = res.data
+      }
+      this.manyTableList = res.data
+      console.log(res.data)
+    }
   }
 }
 </script>
