@@ -26,7 +26,7 @@
       </el-row>
       <el-tabs v-model="activeName" @tab-click="tabClick">
         <el-tab-pane label="动态参数" name="many">
-          <el-button type="primary" size="mini" :disabled="isButtonDisable">添加参数</el-button>
+          <el-button type="primary" size="mini" :disabled="isButtonDisable" @click="addParams">添加参数</el-button>
           <el-table :data="manyTableList">
             <el-table-column type="expand">
               <template slot-scope="scope">
@@ -57,7 +57,7 @@
           </el-table>
         </el-tab-pane>
         <el-tab-pane label="静态属性" name="only">
-          <el-button type="primary" size="mini" :disabled="isButtonDisable">添加属性</el-button>
+          <el-button type="primary" size="mini" :disabled="isButtonDisable" @click="addParams">添加属性</el-button>
           <el-table :data="onlyTableList">
             <el-table-column type="index" label="#"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
@@ -71,6 +71,21 @@
         </el-tab-pane>
       </el-tabs>
     </el-card>
+    <el-dialog
+      :title="'添加'+getDialogName"
+      :visible.sync="addParamsDialogVisible"
+      width="50%"
+      @close="addParamsDialogClose">
+      <el-form :model="paramInfo" :rules="paramInfoRules" ref="paramInfoRef" label-width="100px">
+        <el-form-item :label="getDialogName" prop="attr_name">
+          <el-input v-model="paramInfo.attr_name"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+    <el-button @click="addParamsDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="addParamsDialogVisible = false">确 定</el-button>
+  </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -79,6 +94,10 @@ export default {
   name: '',
   data () {
     return {
+      paramInfo: {
+        attr_name: ''
+      },
+      addParamsDialogVisible: false,
       manyTableList: [],
       onlyTableList: [],
       activeName: 'many',
@@ -89,6 +108,11 @@ export default {
         label: 'cat_name',
         value: 'cat_id',
         children: 'children'
+      },
+      paramInfoRules: {
+        attr_name: [
+          { required: true, message: '请输入参数名称', trigger: 'blur' }
+        ]
       }
     }
   },
@@ -101,6 +125,12 @@ export default {
         return false
       }
       return true
+    },
+    getDialogName () {
+      if (this.activeName === 'many') {
+        return '动态参数'
+      }
+      return '静态属性'
     }
   },
   methods: {
@@ -173,6 +203,12 @@ export default {
         return this.$message.error('修改参数项失败')
       }
       this.$message.success('修改参数项成功')
+    },
+    addParamsDialogClose () {
+      this.$refs.paramInfoRef.resetFields()
+    },
+    addParams () {
+      this.addParamsDialogVisible = true
     }
   }
 }
