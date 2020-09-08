@@ -59,6 +59,24 @@
         <el-tab-pane label="静态属性" name="only">
           <el-button type="primary" size="mini" :disabled="isButtonDisable" @click="addParams">添加属性</el-button>
           <el-table :data="onlyTableList">
+            <el-table-column type="expand">
+              <template slot-scope="scope">
+                <el-tag v-for="(item,i) in scope.row.attr_vals" :key="i" closable>
+                  {{item}}
+                </el-tag>
+                <el-input
+                  class="input-new-tag"
+                  v-if="scope.row.inputVisible"
+                  v-model="scope.row.paramInputValue"
+                  ref="saveTagInput"
+                  size="small"
+                  @keyup.enter.native="handleInputConfirm(scope.row)"
+                  @blur="handleInputConfirm(scope.row)"
+                >
+                </el-input>
+                <el-button v-else class="button-new-tag" size="small" @click="showParamInput(scope.row)">+ New Tag</el-button>
+              </template>
+            </el-table-column>
             <el-table-column type="index" label="#"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
             <el-table-column label="操作">
@@ -83,7 +101,7 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
     <el-button @click="addParamsDialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="addParamsDialogVisible = false">确 定</el-button>
+    <el-button type="primary" @click="submitParams">确 定</el-button>
   </span>
     </el-dialog>
   </div>
@@ -186,15 +204,19 @@ export default {
         this.$refs.saveTagInput.$refs.input.focus()
       })
     },
-    async handleInputConfirm (row) {
-      row.inputVisible = false
+    handleInputConfirm (row) {
       if (row.paramInputValue.trim().length === 0) {
         row.paramInputValue = ''
+        row.inputVisible = false
         return
       }
       row.attr_vals.push(row.paramInputValue.trim())
       row.paramInputValue = ''
-      const { data: res } = this.$http.put(`categories/${row.cat_id}/attributes/${row.attr_id}`, {
+      row.inputVisible = false
+      this.saveAtrrVal(row)
+    },
+    async saveAtrrVal (row) {
+      const { data: res } = await this.$http.put(`categories/${row.cat_id}/attributes/${row.attr_id}`, {
         attr_name: row.attr_name,
         attr_sel: row.attr_sel,
         attr_vals: row.attr_vals.join(',')
@@ -209,6 +231,18 @@ export default {
     },
     addParams () {
       this.addParamsDialogVisible = true
+    },
+    async submitParams () {
+      const { data: res } = await this.$http.post(`categories/${this.getCateId()}/attributes`, {
+        attr_name: this.paramInfo.attr_name,
+        attr_sel: this.activeName
+      })
+      if (res.meta.status !== 201) {
+        return this.$message.error('添加参数失败')
+      }
+      this.$message.success('添加参数成功')
+      this.getPramsList()
+      this.addParamsDialogVisible = false
     }
   }
 }
