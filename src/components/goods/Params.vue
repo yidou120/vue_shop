@@ -49,9 +49,9 @@
             <el-table-column type="index" label="#"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
             <el-table-column label="操作">
-              <template>
-                <el-button size="mini" type="primary" icon="el-icon-edit">修改</el-button>
-                <el-button size="mini" type="danger" icon="el-icon-delete">修改</el-button>
+              <template slot-scope="scope">
+                <el-button size="mini" type="primary" icon="el-icon-edit" @click="editParamValue(scope.row)">修改</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteParams(scope.row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -80,15 +80,16 @@
             <el-table-column type="index" label="#"></el-table-column>
             <el-table-column label="参数名称" prop="attr_name"></el-table-column>
             <el-table-column label="操作">
-              <template>
-                <el-button size="mini" type="primary" icon="el-icon-edit">修改</el-button>
-                <el-button size="mini" type="danger" icon="el-icon-delete">修改</el-button>
+              <template slot-scope="scope">
+                <el-button size="mini" type="primary" icon="el-icon-edit" @click="editParamValue(scope.row)">修改</el-button>
+                <el-button size="mini" type="danger" icon="el-icon-delete" @click="deleteParams(scope.row)">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
       </el-tabs>
     </el-card>
+    <!--添加对话框-->
     <el-dialog
       :title="'添加'+getDialogName"
       :visible.sync="addParamsDialogVisible"
@@ -100,9 +101,25 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-    <el-button @click="addParamsDialogVisible = false">取 消</el-button>
-    <el-button type="primary" @click="submitParams">确 定</el-button>
-  </span>
+        <el-button @click="addParamsDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitParams">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!--修改对话框-->
+    <el-dialog
+      :title="'修改'+getDialogName"
+      :visible.sync="editParamsDialogVisible"
+      width="50%"
+      >
+      <el-form :model="editParamInfo" :rules="editParamInfoRules" ref="editParamInfoRef" label-width="100px">
+        <el-form-item :label="getDialogName" prop="attr_name">
+          <el-input v-model="editParamInfo.attr_name"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editParamsDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitEditParam">确 定</el-button>
+      </span>
     </el-dialog>
   </div>
 </template>
@@ -115,6 +132,8 @@ export default {
       paramInfo: {
         attr_name: ''
       },
+      editParamInfo: {},
+      editParamsDialogVisible: false,
       addParamsDialogVisible: false,
       manyTableList: [],
       onlyTableList: [],
@@ -128,6 +147,11 @@ export default {
         children: 'children'
       },
       paramInfoRules: {
+        attr_name: [
+          { required: true, message: '请输入参数名称', trigger: 'blur' }
+        ]
+      },
+      editParamInfoRules: {
         attr_name: [
           { required: true, message: '请输入参数名称', trigger: 'blur' }
         ]
@@ -232,17 +256,62 @@ export default {
     addParams () {
       this.addParamsDialogVisible = true
     },
-    async submitParams () {
-      const { data: res } = await this.$http.post(`categories/${this.getCateId()}/attributes`, {
-        attr_name: this.paramInfo.attr_name,
-        attr_sel: this.activeName
+    submitParams () {
+      this.$refs.paramInfoRef.validate(async valid => {
+        if (!valid) return
+        const { data: res } = await this.$http.post(`categories/${this.getCateId()}/attributes`, {
+          attr_name: this.paramInfo.attr_name,
+          attr_sel: this.activeName
+        })
+        if (res.meta.status !== 201) {
+          return this.$message.error('添加参数失败')
+        }
+        this.$message.success('添加参数成功')
+        this.getPramsList()
+        this.addParamsDialogVisible = false
       })
-      if (res.meta.status !== 201) {
-        return this.$message.error('添加参数失败')
-      }
-      this.$message.success('添加参数成功')
-      this.getPramsList()
-      this.addParamsDialogVisible = false
+    },
+    async editParamValue (row) {
+      const { data: res } = await this.$http.get(`categories/${row.cat_id}/attributes/${row.attr_id}`, {
+        params: {
+          attr_sel: this.activeName
+        }
+      })
+      this.editParamInfo = res.data
+      this.editParamsDialogVisible = true
+    },
+    submitEditParam () {
+      this.$refs.editParamInfoRef.validate(async valid => {
+        if (!valid) return
+        const { data: res } = await this.$http.put(`categories/${this.getCateId()}/attributes/${this.editParamInfo.attr_id}`, {
+          attr_name: this.editParamInfo.attr_name,
+          attr_sel: this.activeName
+        })
+        if (res.meta.status !== 200) return this.$message.error('修改参数失败')
+        this.$message.success('修改成功')
+        this.getPramsList()
+        this.editParamsDialogVisible = false
+      })
+    },
+    deleteParams (row) {
+      this.$confirm('此操作将永久删除该属性, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        const { data: res } = await this.$http.delete(`categories/${this.getCateId()}/attributes/${row.attr_id}`)
+        if (res.meta.status !== 200) return this.$message.error('删除失败')
+        this.$message({
+          type: 'success',
+          message: '删除成功!'
+        })
+        this.getPramsList()
+      }).catch(() => {
+        this.$message({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
     }
   }
 }
