@@ -49,11 +49,11 @@
       <el-pagination
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        :current-page="currentPage4"
-        :page-sizes="[100, 200, 300, 400]"
-        :page-size="100"
+        :current-page="queryInfo.pagenum"
+        :page-sizes="[5, 10, 15, 20]"
+        :page-size="queryInfo.pagesize"
         layout="total, sizes, prev, pager, next, jumper"
-        :total="400">
+        :total="total">
       </el-pagination>
     </el-card>
   </div>
@@ -70,28 +70,44 @@ export default {
         query: '',
         pagenum: 1,
         pagesize: 10
-      }
+      },
+      total: 0
     }
   },
-  async created () {
-    const { data: res } = await this.$http.get('goods', {
-      params: this.queryInfo
-    })
-    console.log(res)
-    if (res.meta.status !== 200) {
-      this.$message.error('商品列表加载失败')
+  created () {
+    this.getGoodsList()
+  },
+  methods: {
+    handleSizeChange (pagesize) {
+      this.queryInfo.pagesize = pagesize
+      this.getGoodsList()
+    },
+    handleCurrentChange (pagenum) {
+      this.queryInfo.pagenum = pagenum
+      this.getGoodsList()
+    },
+    async getGoodsList () {
+      const { data: res } = await this.$http.get('goods', {
+        params: this.queryInfo
+      })
+      console.log(res)
+      if (res.meta.status !== 200) {
+        this.$message.error('商品列表加载失败')
+      }
+      res.data.goods.forEach(i => {
+        const date = new Date(i.add_time)
+        const Y = date.getFullYear() + '-'
+        const M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-'
+        const D = date.getDate() + ' '
+        const h = date.getHours() + ':'
+        const m = date.getMinutes() + ':'
+        const s = date.getSeconds()
+        i.add_time = Y + M + D + h + m + s
+      })
+      this.goodsList = res.data.goods
+      this.queryInfo.pagenum = res.data.pagenum
+      this.total = res.data.total
     }
-    res.data.goods.forEach(i => {
-      const date = new Date(i.add_time)
-      const Y = date.getFullYear() + '-'
-      const M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '-'
-      const D = date.getDate() + ' '
-      const h = date.getHours() + ':'
-      const m = date.getMinutes() + ':'
-      const s = date.getSeconds()
-      i.add_time = Y + M + D + h + m + s
-    })
-    this.goodsList = res.data.goods
   }
 }
 </script>
