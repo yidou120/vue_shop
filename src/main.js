@@ -21,6 +21,16 @@ axios.interceptors.request.use(config => {
 })
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+Vue.filter('timeformat', function (time) {
+  const date = new Date(time)
+  const y = date.getFullYear()
+  const m = (date.getMonth() + 1 + '').padStart(2, '0')
+  const d = (date.getDate() + 1 + '').padStart(2, '0')
+  const h = (date.getHours() + 1 + '').padStart(2, '0')
+  const mm = (date.getMinutes() + 1 + '').padStart(2, '0')
+  const s = (date.getSeconds() + 1 + '').padStart(2, '0')
+  return `${y}-${m}-${d} ${h}:${mm}:${s}`
+})
 new Vue({
   router,
   render: h => h(App)
