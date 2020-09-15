@@ -26,7 +26,8 @@ import {
   Tabs,
   TabPane,
   Steps,
-  Step
+  Step,
+  Upload
 } from 'element-ui'
 
 Vue.prototype.$message = Message
@@ -56,3 +57,4 @@ Vue.use(Tabs)
 Vue.use(TabPane)
 Vue.use(Steps)
 Vue.use(Step)
+Vue.use(Upload)

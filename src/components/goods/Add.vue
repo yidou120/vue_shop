@@ -56,11 +56,29 @@
               <el-input v-model="item.attr_vals"></el-input>
             </el-form-item>
           </el-tab-pane>
-          <el-tab-pane label="商品图片" name="3">定时任务补偿</el-tab-pane>
+          <el-tab-pane label="商品图片" name="3">
+            <el-upload
+              :action="uploadURL"
+              :on-preview="picHandlePreview"
+              :on-remove="picHandleRemove"
+              :headers="headerObject"
+              :on-success="successUpload"
+              list-type="picture">
+              <el-button size="small" type="primary">点击上传</el-button>
+            </el-upload>
+          </el-tab-pane>
           <el-tab-pane label="商品内容" name="4">定时任务补偿</el-tab-pane>
         </el-tabs>
       </el-form>
     </el-card>
+
+    <el-dialog
+      title="图片预览"
+      :visible.sync="picDialogVisible"
+      width="50%"
+      >
+      <img :src="previewPicUrl" alt="" class="previewImg">
+    </el-dialog>
   </div>
 </template>
 
@@ -69,6 +87,12 @@ export default {
   name: '',
   data () {
     return {
+      previewPicUrl: '',
+      picDialogVisible: false,
+      headerObject: {
+        Authorization: window.sessionStorage.getItem('token')
+      },
+      uploadURL: 'http://127.0.0.1:8888/api/private/v1/upload',
       props: {
         expandTrigger: 'hover',
         label: 'cat_name',
@@ -80,9 +104,11 @@ export default {
       activeIndex: '0',
       goodsInfo: {
         goods_name: '',
-        goods_price: '',
-        goods_weight: '',
-        goods_number: ''
+        goods_price: 0,
+        goods_weight: 0,
+        goods_number: 0,
+        pics: [],
+        attrs: []
       },
       manyTableData: [],
       onlyTableData: [],
@@ -142,6 +168,21 @@ export default {
         if (res.meta.status !== 200) return this.$message.error('获取静态参数失败')
         this.onlyTableData = res.data
       }
+    },
+    picHandleRemove (file) {
+      const path = file.response.data.tmp_path
+      const index = this.goodsInfo.pics.findIndex(item => item.pic === path)
+      this.goodsInfo.pics.splice(index, 1)
+    },
+    picHandlePreview (file) {
+      console.log(file)
+      this.previewPicUrl = file.response.data.url
+      this.picDialogVisible = true
+    },
+    successUpload (response) {
+      const picInfo = { pic: response.data.tmp_path }
+      this.goodsInfo.pics.push(picInfo)
+      console.log(this.goodsInfo.pics)
     }
   },
   created () {
@@ -159,5 +200,7 @@ export default {
 </script>
 
 <style scoped lang="less">
-
+.previewImg{
+  width: 100%;
+}
 </style>
