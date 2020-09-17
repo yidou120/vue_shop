@@ -38,7 +38,7 @@
             </el-form-item>
             <el-form-item label="商品分类">
               <el-cascader
-                v-model="selectKeys"
+                v-model="goodsInfo.goods_cat"
                 :options="cateList"
                 :props="props"
                 @change="handleChange"></el-cascader>
@@ -67,7 +67,10 @@
               <el-button size="small" type="primary">点击上传</el-button>
             </el-upload>
           </el-tab-pane>
-          <el-tab-pane label="商品内容" name="4">定时任务补偿</el-tab-pane>
+          <el-tab-pane label="商品内容" name="4">
+            <quill-editor v-model="goodsInfo.goods_introduce"></quill-editor>
+            <el-button type="primary" class="btnAdd" @click="submitAdd">添加商品</el-button>
+          </el-tab-pane>
         </el-tabs>
       </el-form>
     </el-card>
@@ -83,6 +86,8 @@
 </template>
 
 <script>
+// 导入lodash
+import _ from 'lodash'
 export default {
   name: '',
   data () {
@@ -99,7 +104,6 @@ export default {
         children: 'children',
         value: 'cat_id'
       },
-      selectKeys: [],
       cateList: [],
       activeIndex: '0',
       goodsInfo: {
@@ -108,7 +112,10 @@ export default {
         goods_weight: 0,
         goods_number: 0,
         pics: [],
-        attrs: []
+        attrs: [],
+        // 商品所属类目列表
+        goods_cat: [],
+        goods_introduce: ''
       },
       manyTableData: [],
       onlyTableData: [],
@@ -130,8 +137,8 @@ export default {
   },
   methods: {
     handleChange () {
-      if (this.selectKeys.length !== 3) {
-        this.selectKeys = []
+      if (this.goodsInfo.goods_cat.length !== 3) {
+        this.goodsInfo.goods_cat = []
       }
     },
     async getCateList () {
@@ -140,7 +147,7 @@ export default {
       this.cateList = res.data
     },
     tabBeforeLeave (activeName, oldActiveName) {
-      if (oldActiveName === '0' && this.selectKeys.length !== 3) {
+      if (oldActiveName === '0' && this.goodsInfo.goods_cat.length !== 3) {
         this.$message.error('请选择商品分类')
         return false
       }
@@ -183,6 +190,35 @@ export default {
       const picInfo = { pic: response.data.tmp_path }
       this.goodsInfo.pics.push(picInfo)
       console.log(this.goodsInfo.pics)
+    },
+    submitAdd () {
+      this.$refs.goodsInfoRef.validate(async valid => {
+        if (!valid) return this.$message.error('请填写必要的表单项')
+        const form = _.cloneDeep(this.goodsInfo)
+        // 处理动态参数
+        form.goods_cat = form.goods_cat.join(',')
+        this.manyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals.join(',')
+          }
+          this.goodsInfo.attrs.push(newInfo)
+        })
+        // 处理静态属性
+        this.onlyTableData.forEach(item => {
+          const newInfo = {
+            attr_id: item.attr_id,
+            attr_value: item.attr_vals
+          }
+          this.goodsInfo.attrs.push(newInfo)
+        })
+        form.attrs = this.goodsInfo.attrs
+        const { data: res } = await this.$http.post('goods', form)
+        if (res.meta.status !== 201) return this.$message.error('添加商品失败')
+        this.$message.success('添加商品成功')
+        this.$router.push('/goods')
+        console.log(form)
+      })
     }
   },
   created () {
@@ -190,8 +226,8 @@ export default {
   },
   computed: {
     getCateId () {
-      if (this.selectKeys.length === 3) {
-        return this.selectKeys[2]
+      if (this.goodsInfo.goods_cat.length === 3) {
+        return this.goodsInfo.goods_cat[2]
       }
       return null
     }
@@ -200,7 +236,10 @@ export default {
 </script>
 
 <style scoped lang="less">
-.previewImg{
+.previewImg {
   width: 100%;
+}
+.btnAdd {
+  margin-top: 15px;
 }
 </style>

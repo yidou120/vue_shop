@@ -10,7 +10,12 @@ import './assets/fonts/iconfont.css'
 import './assets/css/global.css'
 import ZkTable from 'vue-table-with-tree-grid'
 import axios from 'axios'
-
+// 导入editor
+import VueQuillEditor from 'vue-quill-editor'
+// 导入样式
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
 Vue.prototype.$http = axios
 Vue.component('tree-table', ZkTable)
 axios.defaults.baseURL = 'http://127.0.0.1:8888/api/private/v1/'
@@ -21,6 +26,7 @@ axios.interceptors.request.use(config => {
 })
 Vue.config.productionTip = false
 Vue.use(ElementUI)
+Vue.use(VueQuillEditor)
 Vue.filter('timeformat', function (time) {
   const date = new Date(time)
   const y = date.getFullYear()
