@@ -57,7 +57,7 @@
           label="操作"
           width="150px">
           <template slot-scope="scope">
-            <el-button size="mini" type="primary" class="el-icon-edit"></el-button>
+            <el-button size="mini" type="primary" class="el-icon-edit" @click="editOrderInfo"></el-button>
             <el-button size="mini" type="success" class="el-icon-location" @click="showLocation(scope.row)"></el-button>
           </template>
         </el-table-column>
@@ -85,16 +85,40 @@
         </el-timeline-item>
       </el-timeline>
     </el-dialog>
+    <el-dialog
+      title="修改地址"
+      :visible.sync="editLocationDialogVisible"
+      width="50%"
+      @close="closeEditLocation">
+      <el-form :model="locationInfo" :rules="locationInfoRules" ref="locationInfoRef" label-width="100px">
+        <el-form-item label="省市区/县" prop="address1">
+          <el-cascader v-model="locationInfo.address1" :options="options" :props="{ expandTrigger: 'hover' }" @change="expandChange"></el-cascader>
+        </el-form-item>
+        <el-form-item label="详细地址" prop="address2">
+          <el-input v-model="locationInfo.address2"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editLocationDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="editLocationDialogVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
+import options from './citydata'
 export default {
   name: '',
   data () {
     return {
+      locationInfo: {
+        address1: [],
+        address2: ''
+      },
       activities: [],
       reverse: false,
+      editLocationDialogVisible: false,
       locationDialogVisible: false,
       orderList: [],
       orderInfo: {
@@ -102,7 +126,16 @@ export default {
         pagenum: 1,
         pagesize: 10
       },
-      total: 0
+      total: 0,
+      locationInfoRules: {
+        address1: [
+          { required: true, message: '请输入活动名称', trigger: 'blur' }
+        ],
+        address2: [
+          { required: true, message: '请输入活动名称', trigger: 'blur' }
+        ]
+      },
+      options
     }
   },
   created () {
@@ -134,11 +167,22 @@ export default {
       this.locationDialogVisible = true
       console.log(res)
       console.log(row)
+    },
+    editOrderInfo () {
+      this.editLocationDialogVisible = true
+    },
+    closeEditLocation () {
+      this.$refs.locationInfoRef.resetFields()
+    },
+    expandChange () {
+      console.log(this.locationInfo.address1)
     }
   }
 }
 </script>
 
 <style scoped lang="less">
-
+.el-cascader {
+  width: 100%;
+}
 </style>
